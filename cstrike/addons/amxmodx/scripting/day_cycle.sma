@@ -22,7 +22,7 @@
 new const debug_prefix[] = "[DEBUG]";
 #endif
 
-new const lighting_levels[] = "bcdefghijklmnopqrs"; // "a" - darkest, "z" - lightest. Cannot be mixed.
+new const lighting_levels[] = ""; // "a" - darkest, "z" - lightest. Cannot be mixed.
 new const Float:lighting_interval = 2.5; // Determines how often the lights change.
 new const lighting_default_level[] = "k"; // What level of light server starts with.
 new const lighting_night_start[] = "k"; // When does the night start.
@@ -165,7 +165,7 @@ public native_get_light_levels_count(plugin, parameters)
 */
 public update_cycle()
 {
-	if(!lighting_enabled)
+	if(!lighting_enabled || !strlen(lighting_levels))
 	{
 		return;
 	}
@@ -179,6 +179,11 @@ public update_cycle()
 
 get_next_light(next[])
 {
+	if(!strlen(lighting_levels))
+	{
+		return;
+	}
+
 	static index;
 
 	// Determine if we want to increase or decrease lighting.
@@ -233,6 +238,11 @@ toggle_cycle(bool:status)
 
 set_light(const level[])
 {
+	if(!strlen(lighting_levels))
+	{
+		return;
+	}
+
 	#if defined DEBUG_MODE
 		log_amx("%s Executing set_light function with level: ^"%s^".", debug_prefix, level);
 	#endif
