@@ -22,10 +22,11 @@
 new const debug_prefix[] = "[DEBUG]";
 #endif
 
-new const lighting_levels[] = ""; // "a" - darkest, "z" - lightest. Cannot be mixed.
-new const Float:lighting_interval = 2.5; // Determines how often the lights change.
+new const lighting_levels[] = "bcdefghijklmnopqrs"; // "a" - darkest, "z" - lightest. Cannot be mixed.
+new Float:lighting_interval = 2.5; // Determines how often the lights change.
 new const lighting_default_level[] = "k"; // What level of light server starts with.
 new const lighting_night_start[] = "k"; // When does the night start.
+new const cycles_per_map = 5;
 
 new const nativesData[][][] =
 {
@@ -224,6 +225,12 @@ toggle_cycle(bool:status)
 	if(status)
 	{
 		set_light(lighting_default_level);
+
+		if(lighting_interval == -1.0)
+		{
+			lighting_interval = (get_cvar_num("mp_timelimit") / cycles_per_map) * 60.0;
+		}
+
 		set_task(lighting_interval, "update_cycle", TASK_CYCLE, .flags = "b");
 	}
 
