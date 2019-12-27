@@ -10,7 +10,7 @@
 
 	@noreturn
 */
-native set_light(const light[]);
+native set_light(light[]);
 
 /*
 	Gets current light level symbol.
