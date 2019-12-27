@@ -65,7 +65,7 @@ public plugin_init()
 {
 	register_plugin("Night/day cycle", "v0.1", AUTHOR);
 
-	forward_handles[forward_light_changed] = CreateMultiForward("light_changed", ET_CONTINUE, FP_CELL);
+	forward_handles[forward_light_changed] = CreateMultiForward("light_changed", ET_CONTINUE, FP_STRING);
 	forward_handles[forward_day_part_changed] = CreateMultiForward("day_part_changed", ET_CONTINUE, FP_CELL);
 
 	toggle_cycle(true);
@@ -286,7 +286,7 @@ set_light(const level[])
 	// Execute forward of light change.
 	if(current_light_index != old_light_index)
 	{
-		ExecuteForward(forward_handles[forward_light_changed], dummy, current_light_index);
+		ExecuteForward(forward_handles[forward_light_changed], dummy, current_light);
 	}
 
 	// Execute forward of day-part change.
