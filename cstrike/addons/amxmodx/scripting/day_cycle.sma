@@ -81,7 +81,7 @@ new current_light[2],
 
 public plugin_init()
 {
-	register_plugin("Night/day cycle", "v0.1", AUTHOR);
+	register_plugin("Night/day cycle", "v1.0", AUTHOR);
 
 	forward_handles[forward_light_changed] = CreateMultiForward("light_changed", ET_CONTINUE, FP_STRING);
 	forward_handles[forward_day_part_changed] = CreateMultiForward("day_part_changed", ET_CONTINUE, FP_CELL);
