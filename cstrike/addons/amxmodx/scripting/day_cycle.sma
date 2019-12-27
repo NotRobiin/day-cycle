@@ -40,18 +40,33 @@ new const nativesData[][][] =
 };
 
 /*
+	[ Enums ]
+*/
+enum forwardEnumerator(+= 1)
+{
+	forward_light_changed = 0,
+	forward_day_part_changed
+};
+
+/*
 	[ Variables ]
 */
 new current_light[2],
 	current_light_index,
 	bool:lighting_enabled,
 	bool:light_increment = true,
-	bool:is_night;
+	bool:is_night,
+
+	forward_handles[forwardEnumerator],
+	dummy;
 
 
 public plugin_init()
 {
 	register_plugin("Night/day cycle", "v0.1", AUTHOR);
+
+	forward_handles[forward_light_changed] = CreateMultiForward("light_changed", ET_CONTINUE, FP_CELL);
+	forward_handles[forward_day_part_changed] = CreateMultiForward("day_part_changed", ET_CONTINUE, FP_CELL);
 
 	toggle_cycle(true);
 }
@@ -248,10 +263,17 @@ set_light(const level[])
 		return;
 	}
 
+	static old_day_part,
+		old_light_index;
+
 	copy(current_light, charsmax(current_light), light);
 
+	// Get old values.
+	old_day_part = is_night;
+	old_light_index = current_light_index;
 	current_light_index = get_light_index(current_light);
 
+	// Update is_night.
 	if(current_light_index > get_light_index(lighting_night_start))
 	{
 		is_night = false;
@@ -259,6 +281,18 @@ set_light(const level[])
 	else
 	{
 		is_night = true;
+	}
+
+	// Execute forward of light change.
+	if(current_light_index != old_light_index)
+	{
+		ExecuteForward(forward_handles[forward_light_changed], dummy, current_light_index);
+	}
+
+	// Execute forward of day-part change.
+	if(is_night != bool:old_day_part)
+	{
+		ExecuteForward(forward_handles[forward_day_part_changed], dummy, is_night);
 	}
 
 	set_lights(light);
