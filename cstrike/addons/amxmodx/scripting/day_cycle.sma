@@ -7,7 +7,7 @@
 #define ForRange(%1,%2,%3) for(new %1 = %2; %1 <= %3; %1++)
 
 /*
-	[ Defines setup ]
+	[ Defines ]
 */
 #pragma semicolon 1
 
@@ -16,7 +16,7 @@
 
 
 /*
-	[ Const setup]
+	[ Consts ]
 */
 #if defined DEBUG_MODE
 new const debug_prefix[] = "[DEBUG]";
@@ -24,11 +24,11 @@ new const debug_prefix[] = "[DEBUG]";
 
 new const cvarsData[][][] =
 {
-	{ "dc_lighting_levels", "bcdefghijklmnopqrs" }, // "a" - darkest, "z" - lightest. Cannot be mixed.
-	{ "dc_lighting_interval", "60.0" }, // Determines how often the lights change.
-	{ "dc_lighting_default_level", "k" }, // What level of light server starts with.
-	{ "dc_lighting_night_start", "k" }, // When does the night start.
-	{ "dc_lighting_cycles_per_map", "5" } // How many day/night cycles if interval is -1.0
+	{ "dc_lighting_levels", "bcdefghijklmnopqrs" },
+	{ "dc_lighting_interval", "60.0" },
+	{ "dc_lighting_default_level", "k" },
+	{ "dc_lighting_night_start", "k" },
+	{ "dc_lighting_cycles_per_map", "5" }
 };
 
 new const nativesData[][][] =
