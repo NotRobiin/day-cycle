@@ -52,3 +52,17 @@ native get_light_levels_count();
 	@return True if it's night, false otherwise.
 */
 native bool:is_night();
+
+/*
+	Executes every time the lights change.
+
+	@param new_light Light that triggered the forward.
+*/
+forward light_changed(new_light[]);
+
+/*
+	Executes when day part is changed to night or day.
+
+	@param night Holds new day-part. True = night, false = day.
+*/
+forward day_part_changed(bool:night);
