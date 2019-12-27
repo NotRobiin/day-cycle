@@ -38,9 +38,9 @@ new const nativesData[][][] =
 
 	{ "get_light_index", "native_get_light_index", 0 },
 	{ "get_light_levels", "native_get_light_levels", 0 },
+	{ "get_light_levels_count", "native_get_light_levels_count", 0 },
 
-	{ "is_night", "native_is_night", 0 },
-	{ "get_light_levels_count", "native_get_light_levels_count", 0 }
+	{ "is_night", "native_is_night", 0 }
 };
 
 /*
