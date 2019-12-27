@@ -22,11 +22,14 @@
 new const debug_prefix[] = "[DEBUG]";
 #endif
 
-new const lighting_levels[] = "bcdefghijklmnopqrs"; // "a" - darkest, "z" - lightest. Cannot be mixed.
-new Float:lighting_interval = 2.5; // Determines how often the lights change.
-new const lighting_default_level[] = "k"; // What level of light server starts with.
-new const lighting_night_start[] = "k"; // When does the night start.
-new const cycles_per_map = 5;
+new const cvarsData[][][] =
+{
+	{ "dc_lighting_levels", "bcdefghijklmnopqrs" }, // "a" - darkest, "z" - lightest. Cannot be mixed.
+	{ "dc_lighting_interval", "60.0" }, // Determines how often the lights change.
+	{ "dc_lighting_default_level", "k" }, // What level of light server starts with.
+	{ "dc_lighting_night_start", "k" }, // When does the night start.
+	{ "dc_lighting_cycles_per_map", "5" } // How many day/night cycles if interval is -1.0
+};
 
 new const nativesData[][][] =
 {
@@ -43,10 +46,19 @@ new const nativesData[][][] =
 /*
 	[ Enums ]
 */
-enum forwardEnumerator(+= 1)
+enum forwardEnumerator (+= 1)
 {
 	forward_light_changed = 0,
 	forward_day_part_changed
+};
+
+enum cvarEnumerator (+= 1)
+{
+	cvar_lighting_levels,
+	cvar_lighting_interval,
+	cvar_lighting_default_level,
+	cvar_lighting_night_start,
+	cvar_lighting_cycles_per_map
 };
 
 /*
@@ -58,8 +70,13 @@ new current_light[2],
 	bool:light_increment = true,
 	bool:is_night,
 
+	lighting_levels[64],
+
 	forward_handles[forwardEnumerator],
-	dummy;
+	forward_dummy,
+
+	cvar_handles[cvarEnumerator],
+	cvar_dummy[64];
 
 
 public plugin_init()
@@ -68,6 +85,11 @@ public plugin_init()
 
 	forward_handles[forward_light_changed] = CreateMultiForward("light_changed", ET_CONTINUE, FP_STRING);
 	forward_handles[forward_day_part_changed] = CreateMultiForward("day_part_changed", ET_CONTINUE, FP_CELL);
+
+	ForArray(i, cvarsData)
+	{
+		cvar_handles[cvarEnumerator:i] = register_cvar(cvarsData[i][0], cvarsData[i][1]);
+	}
 
 	toggle_cycle(true);
 }
@@ -144,11 +166,9 @@ public native_get_light_levels(plugin, parameters)
 		return;
 	}
 
-	static lights[64];
+	get_pcvar_string(cvar_handles[cvar_lighting_levels], cvar_dummy, strlen(cvar_dummy));
 
-	copy(lights, strlen(lighting_levels), lighting_levels);
-
-	set_string(1, lights, strlen(lighting_levels));
+	set_string(1, cvar_dummy, strlen(cvar_dummy));
 }
 
 public bool:native_is_night(plugin, parameters)
@@ -158,7 +178,9 @@ public bool:native_is_night(plugin, parameters)
 
 public native_get_light_levels_count(plugin, parameters)
 {
-	return strlen(lighting_levels);
+	get_pcvar_string(cvar_handles[cvar_lighting_levels], cvar_dummy, strlen(cvar_dummy));
+
+	return strlen(cvar_dummy);
 }
 
 /*
@@ -166,7 +188,14 @@ public native_get_light_levels_count(plugin, parameters)
 */
 public update_cycle()
 {
-	if(!lighting_enabled || !strlen(lighting_levels))
+	if(!lighting_enabled)
+	{
+		return;
+	}
+
+	get_pcvar_string(cvar_handles[cvar_lighting_levels], cvar_dummy, strlen(cvar_dummy));
+
+	if(!strlen(cvar_dummy))
 	{
 		return;
 	}
@@ -180,7 +209,9 @@ public update_cycle()
 
 get_next_light(next[])
 {
-	if(!strlen(lighting_levels))
+	get_pcvar_string(cvar_handles[cvar_lighting_levels], cvar_dummy, strlen(cvar_dummy));
+
+	if(!strlen(cvar_dummy))
 	{
 		return;
 	}
@@ -188,7 +219,7 @@ get_next_light(next[])
 	static index;
 
 	// Determine if we want to increase or decrease lighting.
-	if(current_light_index == strlen(lighting_levels) - 1)
+	if(current_light_index == strlen(cvar_dummy) - 1)
 	{
 		light_increment = false;
 	}
@@ -208,7 +239,7 @@ get_next_light(next[])
 	}
 
 	// Copy new lighting.
-	copy(next, 1, lighting_levels[index]);
+	copy(next, 1, cvar_dummy[index]);
 }
 
 toggle_cycle(bool:status)
@@ -224,14 +255,18 @@ toggle_cycle(bool:status)
 	// Set new tasks and lighting if toggled on.
 	if(status)
 	{
-		set_light(lighting_default_level);
+		new Float:interval = get_pcvar_float(cvar_handles[cvar_lighting_interval]);
 
-		if(lighting_interval == -1.0)
+		get_pcvar_string(cvar_handles[cvar_lighting_default_level], cvar_dummy, strlen(cvar_dummy));
+
+		set_light(cvar_dummy);
+
+		if(interval == -1.0)
 		{
-			lighting_interval = (get_cvar_num("mp_timelimit") / cycles_per_map) * 60.0;
+			interval = (get_cvar_num("mp_timelimit") / get_pcvar_num(cvar_handles[cvar_lighting_cycles_per_map])) * 60.0;
 		}
 
-		set_task(lighting_interval, "update_cycle", TASK_CYCLE, .flags = "b");
+		set_task(interval, "update_cycle", TASK_CYCLE, .flags = "b");
 	}
 
 	#if defined DEBUG_MODE
@@ -290,8 +325,10 @@ set_light(const level[])
 	old_light_index = current_light_index;
 	current_light_index = get_light_index(current_light);
 
+	get_pcvar_string(cvar_handles[cvar_lighting_night_start], cvar_dummy, charsmax(cvar_dummy));
+
 	// Update is_night.
-	if(current_light_index > get_light_index(lighting_night_start))
+	if(current_light_index > get_light_index(cvar_dummy))
 	{
 		is_night = false;
 	}
@@ -303,13 +340,13 @@ set_light(const level[])
 	// Execute forward of light change.
 	if(current_light_index != old_light_index)
 	{
-		ExecuteForward(forward_handles[forward_light_changed], dummy, current_light);
+		ExecuteForward(forward_handles[forward_light_changed], forward_dummy, current_light);
 	}
 
 	// Execute forward of day-part change.
 	if(is_night != bool:old_day_part)
 	{
-		ExecuteForward(forward_handles[forward_day_part_changed], dummy, is_night);
+		ExecuteForward(forward_handles[forward_day_part_changed], forward_dummy, is_night);
 	}
 
 	set_lights(light);
